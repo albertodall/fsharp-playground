@@ -8,13 +8,13 @@ open System.Net
 let getTags (doc : HtmlDocument) (tag : string) =
     doc.Descendants tag
 
-let inputTags doc =
+let getInputTags doc =
     getTags doc "input"
 
-let paragraphTags doc =
+let getParagraphTags doc =
     getTags doc "p"
 
-let isStolenCar plate =
+let searchStolenCarByPlate plate =
     let cc = CookieContainer()
 
     let getInputTags (doc : HtmlDocument) =
@@ -35,18 +35,23 @@ let isStolenCar plate =
     let searchUrl = 
         sprintf "http://www.crimnet.dcpc.interno.gov.it/servpub/ver2/SCAR/ricerca_targa.asp?NumeroTarga1=%s&NumeroTelaio1=%s&transport=%s" plate "" transport
     
-    let response = Http.RequestString(searchUrl, httpMethod = "GET", headers = [ "Referer", "http://www.crimnet.dcpc.interno.gov.it/servpub/ver2/SCAR/cerca_targhe.asp" ], cookieContainer = cc)
+    let response = 
+        Http.RequestString(
+            searchUrl, 
+            httpMethod = "GET", 
+            headers = [ "Referer", "http://www.crimnet.dcpc.interno.gov.it/servpub/ver2/SCAR/cerca_targhe.asp" ], 
+            cookieContainer = cc)
+
     let paragraphs = 
         response
         |> HtmlDocument.Parse
-        |> paragraphTags
-        |> Seq.map (fun t -> t.InnerText())
-    
+        |> getParagraphTags
+
     if Seq.length paragraphs > 10 then
-        paragraphs |> Seq.item 11
+        paragraphs |> Seq.item 11 |> HtmlNode.innerText
     else
-        paragraphs |> Seq.item 1
+        paragraphs |> Seq.item 1 |> HtmlNode.innerText
 
-isStolenCar "AB074LS"
-
-isStolenCar "BV479SB"
+// Examples:
+// isStolenCar "AB074LS"
+// isStolenCar "BV479SB"
